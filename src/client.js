@@ -257,7 +257,19 @@ IrcClient.prototype.startPeriodicPing = function() {
     
     function pingTimeout() {
         that.emit('ping timeout');
-        that.quit('Ping timeout (' + that.options.ping_timeout + ' seconds)');
+        // Ping timeout should be treated as an error and we should try to reconnect.
+        // In this case the socket may or may not trigger an error later (ETIMEOUT).
+        // Since we already know something is wrong we force the socket to close. This Will
+        // trigger 'close' event on the socket which will try to reconnect.
+        console.log('force soket close because of ping timeout');
+        if (that.connection.socket != null) {
+          if (that.connection.socket.close) {
+            that.connection.socket.close();
+          }
+        } else {
+          console.log('socket was already null, someone else closed it');
+        }
+        // that.quit('Ping timeout (' + that.options.ping_timeout + ' seconds)');
     }
     
     this.resetPingTimer = resetPingTimer;
